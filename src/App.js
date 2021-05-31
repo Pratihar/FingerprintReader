@@ -8,25 +8,67 @@ function App() {
   const [detectedPort, setDetectedPort] = React.useState(null);
   const [fingerprint, setFingerprint] = React.useState(null);
 
+  // Changes XML to JSON
+  function xmlToJson(xml) {
+    // Create the return object
+    var obj = {};
+
+    if (xml.nodeType == 1) {
+      // element
+      // do attributes
+      if (xml.attributes.length > 0) {
+        obj["@attributes"] = {};
+        for (var j = 0; j < xml.attributes.length; j++) {
+          var attribute = xml.attributes.item(j);
+          obj["@attributes"][attribute.nodeName] = attribute.nodeValue;
+        }
+      }
+    } else if (xml.nodeType == 3) {
+      // text
+      obj = xml.nodeValue;
+    }
+
+    // do children
+    if (xml.hasChildNodes()) {
+      for (var i = 0; i < xml.childNodes.length; i++) {
+        var item = xml.childNodes.item(i);
+        var nodeName = item.nodeName;
+        if (typeof obj[nodeName] == "undefined") {
+          obj[nodeName] = xmlToJson(item);
+        } else {
+          if (typeof obj[nodeName].push == "undefined") {
+            var old = obj[nodeName];
+            obj[nodeName] = [];
+            obj[nodeName].push(old);
+          }
+          obj[nodeName].push(xmlToJson(item));
+        }
+      }
+    }
+    return obj;
+  }
+
   function info() {
     var urlStr = "http://localhost:" + detectedPort + "/rd/info";
     getJSON_info(urlStr, function (err, data) {
-      console.log(data);
       if (err != null) {
         alert("Something went wrong: " + err);
       } else {
-        alert("Response:-" + String(data));
+        var printResponse = new XMLSerializer().serializeToString(
+          data.documentElement
+        );
+        alert("Response:-" + printResponse);
       }
     });
   }
   var getJSON_info = function (url, callback) {
     var xhr = new XMLHttpRequest();
     xhr.open("DEVICEINFO", url, true);
-    xhr.responseType = "text";
+    xhr.responseType = "document";
     xhr.onload = function () {
       var status = xhr.status;
       if (status == 200) {
-        callback(null, xhr.response);
+        callback(null, xhr.responseXML);
       } else {
         callback(status);
       }
