@@ -6,10 +6,35 @@ import "bootstrap/dist/css/bootstrap.min.css";
 
 function App() {
   const [detectedPort, setDetectedPort] = React.useState(null);
+  const [fingerprint, setFingerprint] = React.useState(null);
+
+  function info() {
+    var urlStr = "http://localhost:" + detectedPort + "/rd/info";
+    getJSON_info(urlStr, function (err, data) {
+      console.log(data);
+      if (err != null) {
+        alert("Something went wrong: " + err);
+      } else {
+        alert("Response:-" + String(data));
+      }
+    });
+  }
+  var getJSON_info = function (url, callback) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("DEVICEINFO", url, true);
+    xhr.responseType = "text";
+    xhr.onload = function () {
+      var status = xhr.status;
+      if (status == 200) {
+        callback(null, xhr.response);
+      } else {
+        callback(status);
+      }
+    };
+    xhr.send();
+  };
 
   function rdservice() {
-    var urlStr = "";
-
     for (var i = 11100; i <= 11120; i++) {
       if (detectedPort) break;
 
@@ -38,18 +63,18 @@ function App() {
   };
 
   function captureFPAuth() {
-    var urlStr = "";
-
-    urlStr = "http://localhost:" + detectedPort + "/rd/capture";
+    var urlStr = "http://localhost:" + detectedPort + "/rd/capture";
 
     getJSONCapture(urlStr, function (err, data) {
       if (err != null) {
         alert("Something went wrong: " + err);
       } else {
         alert("Response:-" + String(data));
+        setFingerprint(data);
       }
     });
   }
+
   var getJSONCapture = function (url, callback) {
     var xhr = new XMLHttpRequest();
     xhr.open("CAPTURE", url, true);
@@ -76,17 +101,46 @@ function App() {
           <button
             onClick={() => rdservice()}
             type="button"
-            class="btn btn-primary"
+            className="btn btn-primary"
           >
             Detect
           </button>
           <button
             disabled={detectedPort === null ? true : false}
+            onClick={() => info()}
+            type="button"
+            className="btn btn-primary"
+          >
+            Device Info
+          </button>
+          <button
+            disabled={detectedPort === null ? true : false}
             onClick={() => captureFPAuth()}
             type="button"
-            class="btn btn-primary"
+            className="btn btn-primary"
           >
             Capture
+          </button>
+        </div>
+        <br />
+        <br />
+        <div className="col-md-6 d-flex justify-content-around">
+          <input
+            disabled={fingerprint === null ? true : false}
+            type="text"
+            className="form-control"
+            placeholder="Adhaar Number"
+            aria-label="Adhaar Number"
+            aria-describedby="basic-addon2"
+          />
+          &nbsp;
+          <button
+            disabled={fingerprint === null ? true : false}
+            onClick={() => captureFPAuth()}
+            type="button"
+            className="btn btn-primary"
+          >
+            Verify
           </button>
         </div>
       </header>
